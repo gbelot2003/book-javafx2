@@ -22,164 +22,168 @@ import javafx.beans.property.ReadOnlyIntegerProperty;
  * @author ajax
  */
 public class Person {
+	// An enum for age categories
+	public enum AgeCategory {
+		BABY, CHILD, TEEN, ADULT, SENIOR, UNKNOWN
+	};
 
-    /**
-     * Enum age Category
-     */
-    public enum AgeCategory {
+	private final ReadOnlyIntegerWrapper personId = new ReadOnlyIntegerWrapper(this, "personId", personSequence.incrementAndGet());
+	private final StringProperty firstName = new SimpleStringProperty(this, "firstName", null);
+	private final StringProperty lastName =  new SimpleStringProperty(this, "lastName", null);
+	private final ObjectProperty<LocalDate> birthDate = new SimpleObjectProperty<>(this, "birthDate", null);
 
-        BABY, CHILD, TEEN, ADULT, SENIOR, UNKNOWN
-    };
+	// Keeps track of last generated person id
+	private static AtomicInteger personSequence = new AtomicInteger(0);
 
-    private final ReadOnlyIntegerWrapper personId = new ReadOnlyIntegerWrapper(this, "personId", personSequence.incrementAndGet());
+	public Person() {
+		this(null, null, null);
+	}
 
-    private final StringProperty firstName = new SimpleStringProperty(this, "firstName", null);
+	public Person(String firstName, String lastName, LocalDate birthDate) {
+		this.firstName.set(firstName);
+		this.lastName.set(lastName);
+		this.birthDate.set(birthDate);
+	}
 
-    private final StringProperty lastName = new SimpleStringProperty(this, "lastName", null);
+	/* personId Property */
+	public final int getPersonId() {
+		return personId.get();
+	}
 
-    private final ObjectProperty<LocalDate> birthDate = new SimpleObjectProperty<>(this, "birthDate", null);
+	public final ReadOnlyIntegerProperty personIdProperty() {
+		return personId.getReadOnlyProperty();
+	}
 
-    /**
-     * Keep track of last generated person id
-     */
-    private static AtomicInteger personSequence = new AtomicInteger(0);
+	/* firstName Property */
+	public final String getFirstName() {
+		return firstName.get();
+	}
 
-    public Person() {
-        this(null, null, null);
-    }
+	public final void setFirstName(String firstName) {
+		firstNameProperty().set(firstName);
+	}
 
-    public Person(String firstName, String lastName, LocalDate birthDate) {
-        this.firstName.set(firstName);
-        this.lastName.set(lastName);
-        this.birthDate.set(birthDate);
-    }
+	public final StringProperty firstNameProperty() {
+		return firstName;
+	}
 
-    public final int getPersonId() {
-        return personId.get();
-    }
 
-    public final ReadOnlyIntegerProperty personIdProperty() {
-        return personId.getReadOnlyProperty();
-    }
+	/* lastName Property */
+	public final String getLastName() {
+		return lastName.get();
+	}
 
-    /* firstName Property */
-    public final String getFirstName() {
-        return firstName.get();
-    }
+	public final void setLastName(String lastName) {
+		lastNameProperty().set(lastName);
+	}
 
-    /* lastName Property */
-    public final String getLastName() {
-        return lastName.get();
-    }
+	public final StringProperty lastNameProperty() {
+		return lastName;
+	}
 
-    public final void setFirstName(String firstName) {
-        lastNameProperty().set(firstName);
-    }
+	/* birthDate Property */
+	public final LocalDate getBirthDate() {
+		return birthDate.get();
+	}
 
-    public final void setLastName(String lastName) {
-        lastNameProperty().set(lastName);
-    }
+	public final void setBirthDate(LocalDate birthDate) {
+		birthDateProperty().set(birthDate);
+	}
 
-    public final StringProperty lastNameProperty() {
-        return lastName;
-    }
+	public final ObjectProperty<LocalDate> birthDateProperty() {
+		return birthDate;
+	}
 
-    /* birthDate Property */
-    public final LocalDate getBirthDate() {
-        return birthDate.get();
-    }
+	/* Domain specific business rules */
+	public boolean isValidBirthDate(LocalDate bdate) {
+		return isValidBirthDate(bdate, new ArrayList<>());
+	}
+	
+	/* Domain specific business rules */
+	public boolean isValidBirthDate(LocalDate bdate, List<String> errorList) {
+		if (bdate == null) {
+			return true;
+		}
 
-    public final void setBirthDate(LocalDate birthDate) {
-        birthDateProperty().set(birthDate);
-    }
+		// Birth date cannot be in the future
+		if (bdate.isAfter(LocalDate.now())) {
+			errorList.add("Birth date must not be in future.");
+			return false;
+		}
 
-    public final ObjectProperty<LocalDate> birthDateProperty() {
-        return birthDate;
-    }
+		return true;
+	}
 
-    /* Domain specific business rules */
-    public boolean isValidBirthDate(LocalDate bdate) {
-        return isValidBirthDate(bdate, new ArrayList<>());
-    }
+	/* Domain specific business rules */
+	public boolean isValidPerson(List<String> errorList) {
+		return isValidPerson(this, errorList);
+	}
 
-    /* Domain specific business rules */
-    public boolean isValidBirthDate(LocalDate bdate, List<String> errorList) {
-        if (bdate == null) {
-            return true;
-        }
+	/* Domain specific business rules */
+	public boolean isValidPerson(Person p, List<String> errorList) {
+		boolean isValid = true;
 
-        // Birth date cannot be in the future
-        if (bdate.isAfter(LocalDate.now())) {
-            errorList.add("Birth date must not be in future.");
-            return false;
-        }
-        return true;
-    }
+		String fn = p.firstName.get();
+		if (fn == null || fn.trim().length() == 0) {
+			errorList.add("First name must contain minimum one character.");
+			isValid = false;
+		}
 
-    /* Domain specific business rules */
-    public boolean isValidPerson(Person p, List<String> errorList) {
-        boolean isValid = true;
-        String fn = p.firstName.get();
-        if (fn == null || fn.trim().length() == 0) {
-            errorList.add("First name must contain minimum one character.");
-            isValid = false;
-        }
+		String ln = p.lastName.get();
+		if (ln == null || ln.trim().length() == 0) {
+			errorList.add("Last name must contain minimum one character.");
+			isValid = false;
+		}
 
-        String ln = p.lastName.get();
-        if (ln == null || ln.trim().length() == 0) {
-            errorList.add("Last name must contain minimum one character.");
-            isValid = false;
-        }
+		if (!isValidBirthDate(this.birthDate.get(), errorList)) {
+			isValid = false;
+		}
 
-        if (!isValidBirthDate(this.birthDate.get(), errorList)) {
-            isValid = false;
-        }
+		return isValid;
+	}
 
-        return isValid;
-    }
+	/* Domain specific business rules */
+	public AgeCategory getAgeCategory() {
+		if (birthDate.get() == null) {
+			return AgeCategory.UNKNOWN;
+		}
+		
+		long years = ChronoUnit.YEARS.between(birthDate.get(), LocalDate.now());
+		if (years >= 0 && years < 2) {
+			return AgeCategory.BABY;
+		}
+		else if (years >= 2 && years < 13) {
+			return AgeCategory.CHILD;
+		}
+		else if (years >= 13 && years <= 19) {
+			return AgeCategory.TEEN;
+		} 
+		else if (years > 19 && years <= 50) {
+			return AgeCategory.ADULT;
+		} 
+		else if (years > 50) {
+			return AgeCategory.SENIOR;
+		} else {
+			return AgeCategory.UNKNOWN;
+		}
+	}
 
-    /* Domain specific business rules */
-    public AgeCategory getAgeCategory() {
+	/* Domain specific business rules */
+	public boolean save(List<String> errorList) {
+		boolean isSaved = false;
+		if (isValidPerson(errorList)) {
+			System.out.println("Saved " + this.toString());
+			isSaved = true;
+		}
+		
+		return isSaved;
+	}
 
-        if (birthDate.get() == null) {
-            return AgeCategory.UNKNOWN;
-        }
-
-        long years = ChronoUnit.YEARS.between(birthDate.get(), LocalDate.now());
-
-        if (years >= 0 && years < 2) {
-            return AgeCategory.BABY;
-        } else if (years >= 2 && years < 13) {
-            return AgeCategory.CHILD;
-        } else if (years >= 13 && years <= 19) {
-            return AgeCategory.TEEN;
-        } else if (years > 19 && years <= 50) {
-            return AgeCategory.ADULT;
-        } else if (years > 50) {
-            return AgeCategory.SENIOR;
-        } else {
-            return AgeCategory.UNKNOWN;
-        }
-
-    }
-
-    /* Domain specific business rules */
-    public boolean save(List<String> errorList) {
-        boolean isSaved = false;
-        if (isValidPerson(errorList)) {
-            System.out.println("Saved " + this.toString());
-            isSaved = true;
-        }
-
-        return isSaved;
-    }
-
-    @Override
-    public String toString() {
-        return "[personId=" + personId.get()
-                + ", firstName=" + firstName.get()
-                + ", lastName=" + lastName.get()
-                + ", birthDate=" + birthDate.get() + "]";
-    }
-
+	@Override
+	public String toString() {
+		return "[personId=" + personId.get() + 
+		       ", firstName=" + firstName.get() + 
+		       ", lastName=" + lastName.get() + 
+		       ", birthDate=" + birthDate.get() + "]";
+	}
 }
