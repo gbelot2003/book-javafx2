@@ -25,10 +25,10 @@ import static javafx.stage.StageStyle.UTILITY;
  * @author ajax
  */
 public class BlackStage extends Application {
-        /**
-     * 
-     * @param args 
-     */
+    /**
+    * 
+    * @param args 
+    */
     public static void main(String[] args){
         Application.launch(args);
     }
